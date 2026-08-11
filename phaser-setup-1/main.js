@@ -1,3 +1,4 @@
+// filepath: /phaser-setup/phaser-setup/main.js
 // -----------------------------
 // 1) phaser game configuration
 // -----------------------------
@@ -12,7 +13,6 @@ const config = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
     physics: {
-        // there are two physics systems in pahser, arcade for simple games and matter for more omcplex phhysics simulations
         default: "arcade",
         arcade: {
             gravity: { y: 900 }, // pulls player downward
@@ -39,7 +39,6 @@ let keys;
 // 3) scene lifecycle methods
 // -----------------------------
 function preload() {
-    // load character gif states from the parent assets folder.
     this.load.image("idle", "../assets/Idle.gif");
     this.load.image("run", "../assets/Run.gif");
     this.load.image("jump", "../assets/Jump.gif");
@@ -50,35 +49,27 @@ function create() {
     const gameWidth = this.scale.width;
     const gameHeight = this.scale.height;
 
-    // create a static ground body near the bottom of the screen.
-    // a static body does not move when bumped.
     ground = this.add.rectangle(gameWidth / 2, gameHeight - 25, gameWidth, 50, 0x8b5a2b);
     this.physics.add.existing(ground, true);
 
-    // create player as a sprite image so we can swap visual states.
     player = this.physics.add.image(120, gameHeight - 200, "idle");
     this.physics.add.existing(player);
     player.setScale(2);
 
-    // access the arcade body for physics settings.
     const playerBody = player.body;
-    playerBody.setCollideWorldBounds(true); // keep player inside canvas
-    playerBody.setBounce(0.05); // small bounce for feel
+    playerBody.setCollideWorldBounds(true);
+    playerBody.setBounce(0.05);
 
-    // let player stand and collide on the ground.
     this.physics.add.collider(player, ground);
 
-    // track keyboard keys for wasd movement.
     keys = this.input.keyboard.addKeys({
         left: Phaser.Input.Keyboard.KeyCodes.A,
         right: Phaser.Input.Keyboard.KeyCodes.D,
         jump: Phaser.Input.Keyboard.KeyCodes.W
     });
 
-    // keep world bounds synced with current screen size.
     this.physics.world.setBounds(0, 0, gameWidth, gameHeight);
 
-    // handle browser resize so the game truly stays fullscreen.
     this.scale.on("resize", (gameSize) => {
         const newWidth = gameSize.width;
         const newHeight = gameSize.height;
@@ -94,7 +85,6 @@ function create() {
 function update() {
     const playerBody = player.body;
 
-    // horizontal movement
     if (keys.left.isDown) {
         playerBody.setVelocityX(-320);
         player.setFlipX(true);
@@ -102,17 +92,13 @@ function update() {
         playerBody.setVelocityX(320);
         player.setFlipX(false);
     } else {
-        // no key pressed: stop left/right movement
         playerBody.setVelocityX(0);
     }
 
-    // jump only if touching the ground.
-    //   this prevents infinite jumping in the air.
     if (keys.jump.isDown && playerBody.blocked.down) {
         playerBody.setVelocityY(-450);
     }
 
-    // simple state-based visual swap using gif textures.
     if (!playerBody.blocked.down) {
         if (playerBody.velocity.y < 0) {
             player.setTexture("jump");
