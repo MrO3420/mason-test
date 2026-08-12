@@ -55,10 +55,12 @@ function preload() {
 
     // Player 1 attack spritesheet.
     // attack.png is 600 x 160, made from 120 x 80 frames.
-    this.load.spritesheet("playerAttack", "../assets/1/attack.png", {
+    this.load.spritesheet("playerAttack", "../assets/1/AttackCombo.png", {
         frameWidth: 120,
         frameHeight: 80
     });
+
+
 
     this.load.image("playerTwoIdle", "../assets/2/2Idle.gif");
     this.load.image("playerTwoRun", "../assets/2/2Run.gif");
