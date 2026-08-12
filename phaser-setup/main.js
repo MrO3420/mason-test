@@ -12,7 +12,6 @@ const config = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
     physics: {
-        // there are two physics systems in pahser, arcade for simple games and matter for more omcplex phhysics simulations
         default: "arcade",
         arcade: {
             gravity: { y: 900 }, // pulls player downward
@@ -32,53 +31,95 @@ const game = new Phaser.Game(config);
 // 2) variables used by scene
 // -----------------------------
 let player;
+let playerTwo;
 let ground;
 let keys;
+let keysTwo;
+
+// add a variable to track if the player is attacking
+let playerIsAttacking = false;
+let playerTwoIsAttacking = false;
 
 // -----------------------------
 // 3) scene lifecycle methods
 // -----------------------------
 function preload() {
-    // load character gif states from the parent assets folder.
-    this.load.image("idle", "../assets/Idle.gif");
-    this.load.image("run", "../assets/Run.gif");
-    this.load.image("jump", "../assets/Jump.gif");
-    this.load.image("fall", "../assets/Fall.gif");
+    this.load.image("playerIdle", "../assets/1/Idle.gif");
+    this.load.image("playerRun", "../assets/1/Run.gif");
+    this.load.image("playerJump", "../assets/1/Jump.gif");
+    this.load.image("playerFall", "../assets/1/Fall.gif");
+
+    // Player 1 attack spritesheet.
+    // attack.png is 600 x 160, made from 120 x 80 frames.
+    this.load.spritesheet("playerAttack", "../assets/1/attack.png", {
+        frameWidth: 120,
+        frameHeight: 80
+    });
+
+    this.load.image("playerTwoIdle", "../assets/2/2Idle.gif");
+    this.load.image("playerTwoRun", "../assets/2/2Run.gif");
+    this.load.image("playerTwoJump", "../assets/2/2Jump.gif");
+    this.load.image("playerTwoFall", "../assets/2/2JumpFallInbetween.gif");
+
+    // Player 2 will use the same "playerAttack" spritesheet as Player 1.
 }
 
 function create() {
+
+    //game width and height variables for easier access
     const gameWidth = this.scale.width;
     const gameHeight = this.scale.height;
 
-    // create a static ground body near the bottom of the screen.
-    // a static body does not move when bumped.
+    // create a ground rectangle that spans the width of the game and is 50 pixels tall
     ground = this.add.rectangle(gameWidth / 2, gameHeight - 25, gameWidth, 50, 0x8b5a2b);
     this.physics.add.existing(ground, true);
 
-    // create player as a sprite image so we can swap visual states.
-    player = this.physics.add.image(120, gameHeight - 200, "idle");
+    // player 1 and 2 add physics 
+    player = this.physics.add.sprite(120, gameHeight - 200, "playerIdle");
     this.physics.add.existing(player);
-    player.setScale(2);
+    player.setScale(3);
 
-    // access the arcade body for physics settings.
+    playerTwo = this.physics.add.sprite(1620, gameHeight - 200, "playerTwoIdle");
+    this.physics.add.existing(playerTwo);
+    playerTwo.setScale(3);
+
+    // player 1 and 2 add collider boxes ( SO THEY DON'T FALL OFF THE SCREEN )
     const playerBody = player.body;
-    playerBody.setCollideWorldBounds(true); // keep player inside canvas
-    playerBody.setBounce(0.05); // small bounce for feel
+    playerBody.setCollideWorldBounds(true);
+    playerBody.setBounce(0.05);
 
-    // let player stand and collide on the ground.
+    const playerTwoBody = playerTwo.body;
+    playerTwoBody.setCollideWorldBounds(true);
+    playerTwoBody.setBounce(0.05);
+
+    // add collider between player and ground
     this.physics.add.collider(player, ground);
+    this.physics.add.collider(playerTwo, ground);
 
-    // track keyboard keys for wasd movement.
+    // -----------------------------
+    // 3) controls for player 1 and 2
+    // -----------------------------
+
     keys = this.input.keyboard.addKeys({
         left: Phaser.Input.Keyboard.KeyCodes.A,
         right: Phaser.Input.Keyboard.KeyCodes.D,
-        jump: Phaser.Input.Keyboard.KeyCodes.W
+        jump: Phaser.Input.Keyboard.KeyCodes.W,
+
+        //add attack key
+        attack: Phaser.Input.Keyboard.KeyCodes.SPACE
     });
 
-    // keep world bounds synced with current screen size.
+    keysTwo = this.input.keyboard.addKeys({
+        left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+        right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+        jump: Phaser.Input.Keyboard.KeyCodes.UP,
+
+        //add attack key
+        attack: Phaser.Input.Keyboard.KeyCodes.SHIFT
+    });
+
     this.physics.world.setBounds(0, 0, gameWidth, gameHeight);
 
-    // handle browser resize so the game truly stays fullscreen.
     this.scale.on("resize", (gameSize) => {
         const newWidth = gameSize.width;
         const newHeight = gameSize.height;
@@ -89,12 +130,46 @@ function create() {
 
         this.physics.world.setBounds(0, 0, newWidth, newHeight);
     });
+
+    // add player attack animation
+    this.anims.create({
+        key: "playerAttackAnimation",
+        frames: this.anims.generateFrameNumbers("playerAttack", { start: 0, end: 9 }),
+        frameRate: 10,
+        repeat: 0 // 0 means play one time
+    });
+
+    // add player 2 attack animation
+    this.anims.create({
+        key: "playerTwoAttackAnimation",
+        frames: this.anims.generateFrameNumbers("playerAttack", { start: 0, end: 9 }),
+        frameRate: 10,
+        repeat: 0 // 0 means play one time
+    });
+
+    // add event listeners for when the attack animations complete ( 'go back to idle')
+    player.on("animationcomplete", (animation) => {
+        if (animation.key === "playerAttackAnimation") {
+            playerIsAttacking = false;
+            player.setTexture("playerIdle");
+        }
+    });
+
+    // add event listeners for when the attack animations complete ( 'go back to idle')
+    playerTwo.on("animationcomplete", (animation) => {
+        if (animation.key === "playerTwoAttackAnimation") {
+            playerTwoIsAttacking = false;
+            playerTwo.setTexture("playerTwoIdle");
+        }
+    });
 }
 
 function update() {
+    // -----------------------------
+    // PLAYER ONE UPDATES
+    // -----------------------------
     const playerBody = player.body;
 
-    // horizontal movement
     if (keys.left.isDown) {
         playerBody.setVelocityX(-320);
         player.setFlipX(true);
@@ -102,26 +177,72 @@ function update() {
         playerBody.setVelocityX(320);
         player.setFlipX(false);
     } else {
-        // no key pressed: stop left/right movement
         playerBody.setVelocityX(0);
     }
 
-    // jump only if touching the ground.
-    //   this prevents infinite jumping in the air.
     if (keys.jump.isDown && playerBody.blocked.down) {
         playerBody.setVelocityY(-450);
     }
 
-    // simple state-based visual swap using gif textures.
-    if (!playerBody.blocked.down) {
-        if (playerBody.velocity.y < 0) {
-            player.setTexture("jump");
+    //new code to handle player attack animation and state ⬇️
+
+    if (!playerIsAttacking) {
+        if (!playerBody.blocked.down) {
+            if (playerBody.velocity.y < 0) {
+                player.setTexture("playerJump");
+            } else {
+                player.setTexture("playerFall");
+            }
+        } else if (playerBody.velocity.x !== 0) {
+            player.setTexture("playerRun");
         } else {
-            player.setTexture("fall");
+            player.setTexture("playerIdle");
         }
-    } else if (playerBody.velocity.x !== 0) {
-        player.setTexture("run");
-    } else {
-        player.setTexture("idle");
     }
+
+    if (Phaser.Input.Keyboard.JustDown(keys.attack)) {
+        playerIsAttacking = true;
+        player.play("playerAttackAnimation", true);
+    }
+
+    // -----------------------------
+    // PLAYER TWO UPDATES
+    // -----------------------------
+
+    const playerTwoBody = playerTwo.body;
+
+    if (keysTwo.left.isDown) {
+        playerTwoBody.setVelocityX(-320);
+        playerTwo.setFlipX(true);
+    } else if (keysTwo.right.isDown) {
+        playerTwoBody.setVelocityX(320);
+        playerTwo.setFlipX(false);
+    } else {
+        playerTwoBody.setVelocityX(0);
+    }
+
+    if (keysTwo.jump.isDown && playerTwoBody.blocked.down) {
+        playerTwoBody.setVelocityY(-450);
+    }
+
+    //new code to handle player attack animation and state ⬇️
+    if (!playerTwoIsAttacking) {
+        if (!playerTwoBody.blocked.down) {
+            if (playerTwoBody.velocity.y < 0) {
+                playerTwo.setTexture("playerTwoJump");
+            } else {
+                playerTwo.setTexture("playerTwoFall");
+            }
+        } else if (playerTwoBody.velocity.x !== 0) {
+            playerTwo.setTexture("playerTwoRun");
+        } else {
+            playerTwo.setTexture("playerTwoIdle");
+        }
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(keysTwo.attack)) {
+        playerTwoIsAttacking = true;
+        playerTwo.play("playerTwoAttackAnimation", true);
+    }
+
 }
