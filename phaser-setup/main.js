@@ -15,7 +15,7 @@ const config = {
         default: "arcade",
         arcade: {
             gravity: { y: 900 }, // pulls player downward
-            debug: true // shows debug boxes for physics bodies, useful for development
+            debug: false // shows debug boxes for physics bodies, useful for development
         }
     },
     scene: {
@@ -44,6 +44,10 @@ let playerTwoIsAttacking = false;
 // 3) scene lifecycle methods
 // -----------------------------
 function preload() {
+
+    //add heart image for player health
+    this.load.image("heart", "../assets/heart.png");
+
     this.load.image("playerIdle", "../assets/1/Idle.gif");
     this.load.image("playerRun", "../assets/1/Run.gif");
     this.load.image("playerJump", "../assets/1/Jump.gif");
@@ -117,6 +121,13 @@ function create() {
         //add attack key
         attack: Phaser.Input.Keyboard.KeyCodes.SHIFT
     });
+
+    // 3 hearts for Player 1 on the left, 3 hearts for Player 2 on the right.
+    // for loop ( kinda advanced - explain)
+    for (let i = 0; i < 3; i += 1) {
+        this.add.image(40 + i * 45, 40, "heart").setScale(0.07);
+        this.add.image(gameWidth - 40 - i * 45, 40, "heart").setScale(0.07);
+    }
 
     this.physics.world.setBounds(0, 0, gameWidth, gameHeight);
 
