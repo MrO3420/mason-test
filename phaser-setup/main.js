@@ -75,13 +75,13 @@ function create() {
     this.physics.add.existing(ground, true);
 
     // player 1 and 2 add physics 
-    player = this.physics.add.sprite(120, gameHeight - 200, "playerIdle");
+    player = this.physics.add.sprite(120, gameHeight - 400, "playerIdle");
     this.physics.add.existing(player);
-    player.setScale(3);
+    player.setScale(4);
 
-    playerTwo = this.physics.add.sprite(1620, gameHeight - 200, "playerTwoIdle");
+    playerTwo = this.physics.add.sprite(1620, gameHeight - 400, "playerTwoIdle");
     this.physics.add.existing(playerTwo);
-    playerTwo.setScale(3);
+    playerTwo.setScale(4);
 
     // player 1 and 2 add collider boxes ( SO THEY DON'T FALL OFF THE SCREEN )
     const playerBody = player.body;
