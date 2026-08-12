@@ -59,7 +59,7 @@ function create() {
 
     // create a static ground body near the bottom of the screen.
     // a static body does not move when bumped.
-    ground = this.add.rectangle(gameWidth / 2, gameHeight - 25, gameWidth, 50, 0x8b5a2b);
+    ground = this.add.rectangle(gameWidth / 2, gameHeight - 40, gameWidth, 100, 0x8b5a2b);
     this.physics.add.existing(ground, true);
 
     // create player as a sprite image so we can swap visual states.
@@ -67,7 +67,7 @@ function create() {
     this.physics.add.existing(player);
     player.setScale(2);
 
-    playerTwo = this.physics.add.image(1000, gameHeight - 200, "idle2");
+    playerTwo = this.physics.add.image(9000, gameHeight - 200, "idle2");
     this.physics.add.existing(playerTwo);
     playerTwo.setScale(2);
 
@@ -111,6 +111,9 @@ function create() {
         ground.body.updateFromGameObject();
 
         this.physics.world.setBounds(0, 0, newWidth, newHeight);
+
+
+        
     });
 }
 
@@ -183,5 +186,12 @@ function update() {
         playerTwo.setTexture("idle2");
     }
 }
+
+
+
+
+
+
+
 
 
